@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Würfelzahlen — Zahlen ab 20</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,900&family=Roboto+Mono:wght@400;600&family=Karla:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --felt:#1d4a3f;
+    --felt-deep:#153730;
+    --bone:#f2ede2;
+    --ivory:#fffdf7;
+    --gold:#e8b647;
+    --clay:#c9503f;
+    --pip:#22201d;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(circle at 50% 0%, #276054 0%, var(--felt) 45%, var(--felt-deep) 100%);
+    color:var(--bone);
+    font-family:'Karla',system-ui,sans-serif;
+    display:flex;flex-direction:column;align-items:center;
+    padding:28px 18px 60px;
+  }
+  header{text-align:center;margin-bottom:26px}
+  .eyebrow{
+    font-family:'Roboto Mono',monospace;font-size:.72rem;letter-spacing:.28em;
+    text-transform:uppercase;color:var(--gold);margin-bottom:8px;
+  }
+  h1{
+    font-family:'Fraunces',serif;font-weight:900;font-size:clamp(2rem,6vw,3.2rem);
+    line-height:1;letter-spacing:-.02em;
+  }
+  h1 em{font-style:italic;color:var(--gold)}
+  .sub{margin-top:10px;font-size:.95rem;opacity:.75;max-width:44ch}
+
+  .table{
+    width:100%;max-width:720px;
+    background:rgba(0,0,0,.16);
+    border:1px solid rgba(232,182,71,.25);
+    border-radius:22px;
+    padding:30px 24px 26px;
+    box-shadow:0 30px 60px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.06);
+  }
+
+  .dice-row{display:flex;justify-content:center;gap:clamp(18px,6vw,52px);flex-wrap:wrap}
+  .slot{text-align:center}
+  .slot-label{
+    font-family:'Roboto Mono',monospace;font-size:.7rem;letter-spacing:.2em;
+    text-transform:uppercase;opacity:.6;margin-bottom:12px;
+  }
+  .die{
+    width:clamp(92px,22vw,124px);aspect-ratio:1;
+    background:linear-gradient(155deg,var(--ivory),#e6dfd0);
+    border-radius:20px;
+    display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);
+    padding:16%;gap:6%;
+    box-shadow:0 12px 0 #b9b0a0, 0 20px 30px rgba(0,0,0,.4);
+  }
+  .die.rolling{animation:tumble .62s cubic-bezier(.3,.9,.4,1)}
+  @keyframes tumble{
+    0%{transform:rotate(0) translateY(0)}
+    30%{transform:rotate(-16deg) translateY(-26px)}
+    60%{transform:rotate(14deg) translateY(-10px)}
+    100%{transform:rotate(0) translateY(0)}
+  }
+  .pip{border-radius:50%;background:var(--pip);opacity:0;transform:scale(.4);transition:.18s}
+  .pip.on{opacity:1;transform:scale(1)}
+  .die .p1{grid-area:1/1}.die .p2{grid-area:1/3}
+  .die .p3{grid-area:2/1}.die .p4{grid-area:2/2}.die .p5{grid-area:2/3}
+  .die .p6{grid-area:3/1}.die .p7{grid-area:3/3}
+
+  .readout{
+    margin-top:30px;padding-top:24px;
+    border-top:1px dashed rgba(242,237,226,.22);
+    text-align:center;min-height:150px;
+  }
+  .digits{
+    font-family:'Roboto Mono',monospace;font-weight:600;
+    font-size:clamp(3rem,14vw,5.2rem);line-height:1;color:var(--gold);
+  }
+  .digits .placeholder{color:rgba(242,237,226,.2)}
+  .prompt{margin-top:14px;font-size:.9rem;opacity:.7;font-style:italic}
+  .answer{
+    margin-top:14px;
+    font-family:'Fraunces',serif;font-weight:600;font-style:italic;
+    font-size:clamp(1.4rem,5vw,2.1rem);
+    color:var(--ivory);
+  }
+  .answer .split{color:var(--gold);font-style:normal;font-weight:900}
+  .hidden{display:none}
+
+  .controls{display:flex;gap:12px;justify-content:center;margin-top:26px;flex-wrap:wrap}
+  button{
+    font-family:'Karla',sans-serif;font-weight:800;font-size:.95rem;
+    letter-spacing:.03em;padding:14px 26px;border-radius:999px;border:none;
+    cursor:pointer;transition:.15s;
+  }
+  button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+  .btn-roll{background:var(--clay);color:var(--ivory)}
+  .btn-roll:hover{background:#dd5c48;transform:translateY(-2px)}
+  .btn-show{background:transparent;color:var(--bone);border:1px solid rgba(242,237,226,.4)}
+  .btn-show:hover{border-color:var(--gold);color:var(--gold)}
+  button:disabled{opacity:.35;cursor:not-allowed;transform:none}
+
+  .mode{
+    display:flex;gap:8px;justify-content:center;margin-bottom:22px;flex-wrap:wrap;
+  }
+  .mode button{
+    padding:8px 16px;font-size:.78rem;font-weight:600;
+    background:rgba(255,255,255,.06);color:var(--bone);
+    border:1px solid transparent;
+  }
+  .mode button[aria-pressed="true"]{background:var(--gold);color:var(--felt-deep)}
+
+  .btn-speak{background:var(--gold);color:var(--felt-deep)}
+  .btn-speak:hover{background:#f2c55c;transform:translateY(-2px)}
+  .btn-speak.speaking{animation:pulse 1s ease-in-out infinite}
+  @keyframes pulse{50%{box-shadow:0 0 0 10px rgba(232,182,71,.18)}}
+
+  .audio-bar{
+    display:flex;align-items:center;justify-content:center;gap:18px;
+    flex-wrap:wrap;margin-top:16px;
+    font-family:'Roboto Mono',monospace;font-size:.72rem;letter-spacing:.08em;
+  }
+  .toggle{
+    padding:7px 14px;font-size:.72rem;font-family:'Roboto Mono',monospace;
+    background:rgba(255,255,255,.06);color:var(--bone);
+    border:1px solid rgba(242,237,226,.25);font-weight:400;letter-spacing:.08em;
+  }
+  .toggle[aria-pressed="false"]{opacity:.45;text-decoration:line-through}
+  .rate{display:flex;align-items:center;gap:8px;opacity:.65}
+  .rate input{width:96px;accent-color:var(--gold)}
+  .voice-note{
+    max-width:46ch;margin:14px auto 0;text-align:center;
+    font-size:.78rem;line-height:1.5;color:var(--clay);
+    background:rgba(201,80,63,.1);border-radius:10px;padding:10px 14px;
+  }
+
+  .tally{
+    margin-top:22px;text-align:center;
+    font-family:'Roboto Mono',monospace;font-size:.75rem;
+    letter-spacing:.15em;opacity:.55;
+  }
+  .cheat{
+    max-width:720px;width:100%;margin-top:26px;
+    background:rgba(0,0,0,.14);border-radius:16px;
+    border:1px solid rgba(242,237,226,.12);
+  }
+  .cheat summary{
+    padding:14px 20px;cursor:pointer;font-weight:600;font-size:.9rem;
+    list-style:none;color:var(--gold);
+  }
+  .cheat summary::-webkit-details-marker{display:none}
+  .cheat-body{
+    padding:0 20px 20px;display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px 20px;
+    font-size:.85rem;
+  }
+  .cheat-body span{display:flex;gap:8px;cursor:pointer;border-radius:6px;padding:3px 6px;transition:.12s}
+  .cheat-body span:hover{background:rgba(232,182,71,.14)}
+  .cheat-body span:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
+  .cheat-body b{color:var(--gold);font-family:'Roboto Mono',monospace;font-weight:600;min-width:2.2em}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Deutsch A1 · Zahlen ab 20</div>
+  <h1>Würfel<em>zahlen</em></h1>
+  <p class="sub">Würfeln, die Zahl laut sprechen, dann die Lösung aufdecken.</p>
+</header>
+
+<div class="mode" role="group" aria-label="Modus">
+  <button data-mode="2" aria-pressed="true">2 Würfel · 11–66</button>
+  <button data-mode="3" aria-pressed="false">3 Würfel · 111–666</button>
+  <button data-mode="4" aria-pressed="false">4 Würfel · 1111–6666</button>
+</div>
+
+<main class="table">
+  <div class="dice-row" id="diceRow"></div>
+
+  <div class="readout">
+    <div class="digits" id="digits"><span class="placeholder">??</span></div>
+    <p class="prompt" id="prompt">Drücken Sie „Würfeln“ und sprechen Sie die Zahl.</p>
+    <p class="answer hidden" id="answer"></p>
+  </div>
+
+  <div class="controls">
+    <button class="btn-roll" id="rollBtn">Würfeln</button>
+    <button class="btn-show" id="showBtn" disabled>Lösung zeigen</button>
+    <button class="btn-speak" id="speakBtn" disabled>🔊 Anhören</button>
+  </div>
+
+  <div class="tally" id="tally">Runde 0</div>
+  <div class="audio-bar">
+    <button class="toggle" id="sfxBtn" aria-pressed="true">Soundeffekte: an</button>
+    <label class="rate">Sprechtempo
+      <input type="range" id="rate" min="0.5" max="1.1" step="0.05" value="0.8">
+      <span id="rateVal">0,80×</span>
+    </label>
+  </div>
+  <p class="voice-note hidden" id="voiceNote">Keine deutsche Stimme gefunden. Installieren Sie eine deutsche Sprachausgabe im Betriebssystem, oder nutzen Sie Chrome oder Edge.</p>
+</main>
+
+<details class="cheat">
+  <summary>Spickzettel — Zahlen ab 20</summary>
+  <div class="cheat-body" id="cheatBody"></div>
+</details>
+
+<script>
+/* ---------- ÂM THANH: Web Audio (không cần file mp3) ---------- */
+let actx=null, sfxOn=true;
+function audio(){
+  if(!actx) actx=new (window.AudioContext||window.webkitAudioContext)();
+  if(actx.state==="suspended") actx.resume();
+  return actx;
+}
+function tone({freq=440,dur=.09,type="sine",vol=.18,slideTo=null,delay=0}={}){
+  if(!sfxOn) return;
+  const a=audio(), t=a.currentTime+delay;
+  const osc=a.createOscillator(), g=a.createGain();
+  osc.type=type; osc.frequency.setValueAtTime(freq,t);
+  if(slideTo) osc.frequency.exponentialRampToValueAtTime(slideTo,t+dur);
+  g.gain.setValueAtTime(0,t);
+  g.gain.linearRampToValueAtTime(vol,t+.008);
+  g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  osc.connect(g).connect(a.destination);
+  osc.start(t); osc.stop(t+dur+.02);
+}
+/* tiếng gỗ va chạm: nhiễu trắng qua bộ lọc bandpass */
+function knock({delay=0,vol=.5,freq=900}={}){
+  if(!sfxOn) return;
+  const a=audio(), t=a.currentTime+delay, len=Math.floor(a.sampleRate*.07);
+  const buf=a.createBuffer(1,len,a.sampleRate), d=buf.getChannelData(0);
+  for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3);
+  const src=a.createBufferSource(); src.buffer=buf;
+  const bp=a.createBiquadFilter(); bp.type="bandpass"; bp.frequency.value=freq; bp.Q.value=1.6;
+  const g=a.createGain(); g.gain.value=vol;
+  src.connect(bp).connect(g).connect(a.destination);
+  src.start(t);
+}
+const sfx={
+  click:()=>tone({freq:660,dur:.05,type:"triangle",vol:.12}),
+  tab:  ()=>tone({freq:520,dur:.06,type:"square",vol:.07,slideTo:780}),
+  /* xúc xắc lăn: chuỗi va chạm ngẫu nhiên thưa dần */
+  roll:(n)=>{
+    if(!sfxOn) return;
+    const hits=8+n*3;
+    for(let i=0;i<hits;i++){
+      const p=i/hits;
+      knock({delay:p*p*.55+Math.random()*.03, vol:.42*(1-p*.6), freq:600+Math.random()*900});
+    }
+  },
+  land:(n)=>{ for(let i=0;i<n;i++) knock({delay:.30+i*.09,vol:.55,freq:420+Math.random()*200}); },
+  reveal:()=>{ tone({freq:523,dur:.12,type:"sine",vol:.14});
+               tone({freq:659,dur:.12,type:"sine",vol:.13,delay:.09});
+               tone({freq:784,dur:.22,type:"sine",vol:.12,delay:.18}); }
+};
+
+/* ---------- GIỌNG ĐỌC TIẾNG ĐỨC ---------- */
+let deVoice=null;
+function pickVoice(){
+  const vs=speechSynthesis.getVoices().filter(v=>/^de/i.test(v.lang));
+  if(!vs.length){ document.getElementById("voiceNote").classList.remove("hidden"); return; }
+  document.getElementById("voiceNote").classList.add("hidden");
+  deVoice = vs.find(v=>/google/i.test(v.name)) || vs.find(v=>v.localService) || vs[0];
+}
+speechSynthesis.addEventListener("voiceschanged",pickVoice);
+pickVoice();
+
+function speakNumber(text){
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang="de-DE";
+  if(deVoice) u.voice=deVoice;
+  u.rate=parseFloat(document.getElementById("rate").value);
+  u.pitch=1;
+  const btn=document.getElementById("speakBtn");
+  u.onstart=()=>btn.classList.add("speaking");
+  u.onend=u.onerror=()=>btn.classList.remove("speaking");
+  speechSynthesis.speak(u);
+}
+
+const ones=["null","eins","zwei","drei","vier","fünf","sechs","sieben","acht","neun"];
+const teens=["zehn","elf","zwölf","dreizehn","vierzehn","fünfzehn","sechzehn","siebzehn","achtzehn","neunzehn"];
+const tens=["","zehn","zwanzig","dreißig","vierzig","fünfzig","sechzig","siebzig","achtzig","neunzig"];
+
+function under100(n){
+  if(n<10) return ones[n];
+  if(n<20) return teens[n-10];
+  const t=Math.floor(n/10), o=n%10;
+  if(o===0) return tens[t];
+  return (o===1?"ein":ones[o])+"und"+tens[t];
+}
+function under1000(n){
+  if(n<100) return under100(n);
+  const h=Math.floor(n/100), r=n%100;
+  return (h===1?"ein":ones[h])+"hundert"+(r?under100(r):"");
+}
+function germanNumber(n){
+  if(n<1000) return under1000(n);
+  const th=Math.floor(n/1000), r=n%1000;
+  return (th===1?"ein":under1000(th))+"tausend"+(r?under1000(r):"");
+}
+function groupDigits(n){return n.toLocaleString("de-DE");}
+
+const PIPS={1:[4],2:[1,7],3:[1,4,7],4:[1,2,6,7],5:[1,2,4,6,7],6:[1,2,3,5,6,7]};
+let count=2, values=[], round=0;
+
+const diceRow=document.getElementById("diceRow");
+const digitsEl=document.getElementById("digits");
+const answerEl=document.getElementById("answer");
+const promptEl=document.getElementById("prompt");
+const rollBtn=document.getElementById("rollBtn");
+const showBtn=document.getElementById("showBtn");
+const speakBtn=document.getElementById("speakBtn");
+const tallyEl=document.getElementById("tally");
+
+function buildDice(){
+  diceRow.innerHTML="";
+  for(let i=0;i<count;i++){
+    const slot=document.createElement("div");
+    slot.className="slot";
+    slot.innerHTML=`<div class="slot-label">Würfel ${i+1}</div>
+      <div class="die" id="die${i}">${[1,2,3,4,5,6,7].map(p=>`<div class="pip p${p}"></div>`).join("")}</div>`;
+    diceRow.appendChild(slot);
+  }
+}
+function renderDie(i,val){
+  const die=document.getElementById("die"+i);
+  die.querySelectorAll(".pip").forEach((p,idx)=>p.classList.toggle("on",PIPS[val].includes(idx+1)));
+}
+function reset(){
+  values=[];
+  speechSynthesis.cancel();
+  digitsEl.innerHTML=`<span class="placeholder">${"?".repeat(count)}</span>`;
+  answerEl.classList.add("hidden");
+  showBtn.disabled=true;
+  speakBtn.disabled=true;
+  promptEl.textContent="Drücken Sie „Würfeln“ und sprechen Sie die Zahl.";
+  buildDice();
+  for(let i=0;i<count;i++) renderDie(i,1);
+}
+
+rollBtn.addEventListener("click",()=>{
+  rollBtn.disabled=true;
+  speechSynthesis.cancel();
+  answerEl.classList.add("hidden");
+  speakBtn.disabled=true;
+  sfx.click(); sfx.roll(count); sfx.land(count);
+  values=Array.from({length:count},()=>1+Math.floor(Math.random()*6));
+  for(let i=0;i<count;i++){
+    const die=document.getElementById("die"+i);
+    die.classList.remove("rolling");void die.offsetWidth;die.classList.add("rolling");
+    setTimeout(()=>renderDie(i,values[i]),300+i*90);
+  }
+  setTimeout(()=>{
+    const n=parseInt(values.join(""),10);
+    digitsEl.textContent=groupDigits(n);
+    promptEl.textContent="Sprechen Sie die Zahl laut. Dann aufdecken.";
+    showBtn.disabled=false;
+    speakBtn.disabled=false;
+    rollBtn.disabled=false;
+    rollBtn.textContent="Nochmal würfeln";
+    round++;tallyEl.textContent="Runde "+round;
+  },420+count*90);
+});
+
+showBtn.addEventListener("click",()=>{
+  const n=parseInt(values.join(""),10);
+  const word=germanNumber(n);
+  sfx.reveal();
+  answerEl.textContent=word;
+  answerEl.classList.remove("hidden");
+  promptEl.textContent="Richtig gesprochen? Weiter zur nächsten Runde.";
+  setTimeout(()=>speakNumber(word),420);
+});
+
+speakBtn.addEventListener("click",()=>{
+  sfx.click();
+  speakNumber(germanNumber(parseInt(values.join(""),10)));
+});
+
+document.querySelectorAll(".mode button").forEach(b=>{
+  b.addEventListener("click",()=>{
+    sfx.tab();
+    document.querySelectorAll(".mode button").forEach(x=>x.setAttribute("aria-pressed","false"));
+    b.setAttribute("aria-pressed","true");
+    count=parseInt(b.dataset.mode,10);
+    rollBtn.textContent="Würfeln";
+    reset();
+  });
+});
+
+document.addEventListener("keydown",e=>{
+  if(e.code==="Space"&&!rollBtn.disabled){e.preventDefault();rollBtn.click();}
+  if(e.code==="Enter"&&!showBtn.disabled&&e.target===document.body){e.preventDefault();showBtn.click();}
+  if(e.key.toLowerCase()==="h"&&!speakBtn.disabled){e.preventDefault();speakBtn.click();}
+});
+
+/* bật / tắt hiệu ứng âm thanh */
+const sfxBtn=document.getElementById("sfxBtn");
+sfxBtn.addEventListener("click",()=>{
+  sfxOn=!sfxOn;
+  sfxBtn.setAttribute("aria-pressed",String(sfxOn));
+  sfxBtn.textContent="Soundeffekte: "+(sfxOn?"an":"aus");
+  if(sfxOn) sfx.click();
+});
+
+/* tốc độ đọc */
+const rateInput=document.getElementById("rate"), rateVal=document.getElementById("rateVal");
+rateInput.addEventListener("input",()=>{
+  rateVal.textContent=parseFloat(rateInput.value).toFixed(2).replace(".",",")+"×";
+});
+
+/* bảng tra cứu: bấm vào một dòng để nghe */
+const cheat=[21,22,23,24,25,26,27,28,29,30,40,50,60,70,80,90,100,200,1000];
+document.getElementById("cheatBody").innerHTML=
+  cheat.map(n=>`<span role="button" tabindex="0" data-n="${n}"><b>${n}</b>${germanNumber(n)}</span>`).join("");
+document.getElementById("cheatBody").addEventListener("click",e=>{
+  const el=e.target.closest("[data-n]"); if(!el) return;
+  sfx.click(); speakNumber(germanNumber(+el.dataset.n));
+});
+document.getElementById("cheatBody").addEventListener("keydown",e=>{
+  if(e.key!=="Enter"&&e.key!==" ") return;
+  const el=e.target.closest("[data-n]"); if(!el) return;
+  e.preventDefault(); speakNumber(germanNumber(+el.dataset.n));
+});
+
+reset();
+</script>
+</body>
+</html>
